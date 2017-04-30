@@ -3,7 +3,7 @@ test your agent's strength against a set of known agents using tournament.py
 and include the results in your report.
 """
 import random
-
+import numpy as np
 
 class SearchTimeout(Exception):
     """Subclass base exception for code clarity. """
@@ -162,7 +162,9 @@ class MinimaxPlayer(IsolationPlayer):
         try:
             # The try/except block will automatically catch the exception
             # raised when the timer is about to expire.
-            return self.minimax(game, self.search_depth)
+            move = self.minimax(game, self.search_depth)
+            #print("move from mini max:", game.get_legal_moves()[move])
+            return move
 
         except SearchTimeout:
             pass  # Handle any actions required after timeout as needed
@@ -171,6 +173,8 @@ class MinimaxPlayer(IsolationPlayer):
         return best_move
 
     def minimax(self, game, depth):
+        global count
+        count = 0
         """Implement depth-limited minimax search algorithm as described in
         the lectures.
 
@@ -209,11 +213,83 @@ class MinimaxPlayer(IsolationPlayer):
                 each helper function or else your agent will timeout during
                 testing.
         """
+
+        def min_value(game, depth):
+            #print("min value")
+            global count
+            if self.time_left() < self.TIMER_THRESHOLD:
+                print("min timeout")
+                raise SearchTimeout()
+            # check if we reached the end game
+            utility = game.utility(game.inactive_player)
+            if (utility):
+                return utility # game is over just return 
+            # check if we exhaust the depth level then we have to return the score
+            if (not depth):
+                count += 1
+                #print("len legal moves: ",len(game.get_legal_moves()))
+                #print(game.print_board())
+                return self.score(game, game.inactive_player)
+            val = float("inf")
+            #print("depth",depth,"legal moves", len(game.get_legal_moves(player=game.active_player)))
+            #otherwise we go through all the actions to get best score
+            for a in game.get_legal_moves(player=game.active_player):
+                #count += 1
+                print("     Min node move:",a)
+                val = min(val, max_value(game.forecast_move(a), depth - 1))
+            return val
+
+
+        def max_value(game, depth):
+            #print("max")
+            global count
+            if self.time_left() < self.TIMER_THRESHOLD:
+                print("max timeout")
+                raise SearchTimeout()
+            # check if we reached the end game
+            utility = game.utility(game.active_player)
+            if (utility):
+                return utility # game is over just return 
+            # check if we exhaust the depth level then we have to return the score
+            if (not depth):
+                count += 1
+                #print("len legal moves: ",len(game.get_legal_moves()))
+                #print(game.print_board())
+                return self.score(game, game.active_player)
+            val = float("-inf")
+            #otherwise we go through all the actions to get best score
+            #print("depth",depth,"legal moves", len(game.get_legal_moves(player=game.active_player)))
+            for a in game.get_legal_moves(player=game.active_player):
+                #count += 1
+                print("     Max node move:",a)
+                val = max(val, min_value(game.forecast_move(a), depth - 1))
+            return val
+
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        # search through all legal moves
+        legal_moves = game.get_legal_moves(game.active_player)
+        print("Player", game.active_player)
+        print("Legal Moves Count",len(legal_moves))
+        
+        # no legal moves return (-1,-1)
+        if (not len(legal_moves)):
+            return (-1,-1)
+        print("check each move score")
+        move_scores = []
+        # recursively find out what is the best moves  
+        # player must be inactive player who will try to minimize the active player score  
+        for move in legal_moves:
+            print("Branch at move: ",move)
+            move_scores.append(min_value(game.forecast_move(move), depth - 1))
+        #move_scores = [min_value(game.forecast_move(move), depth - 1) for move in legal_moves]
+
+        print("Nodes Count: ",count)
+        print("Move scores", move_scores)
+        print("Moves", legal_moves)
+        print("Moves Selected",legal_moves[np.argmax(move_scores)])
+        return legal_moves[np.argmax(move_scores)]
 
 
 class AlphaBetaPlayer(IsolationPlayer):

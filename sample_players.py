@@ -7,7 +7,7 @@ own agent and example heuristic functions.
 """
 
 from random import randint
-
+import game_agent
 
 def null_score(game, player):
     """This heuristic presumes no knowledge for non-terminal states, and
@@ -254,10 +254,11 @@ class HumanPlayer():
 
 if __name__ == "__main__":
     from isolation import Board
+    from game_agent import MinimaxPlayer
 
     # create an isolation board (by default 7x7)
-    player1 = RandomPlayer()
-    player2 = GreedyPlayer()
+    player1 = MinimaxPlayer(score_fn=open_move_score)
+    player2 = MinimaxPlayer(score_fn=open_move_score)
     game = Board(player1, player2)
 
     # place player 1 on the board at row 2, column 3, then place player 2 on
