@@ -72,27 +72,22 @@ def improved_score(game, player):
     return float(own_moves - opp_moves)
 
 
-
 class IsolationTest(unittest.TestCase):
     """Unit tests for isolation agents"""
 
     def setUp(self):
         reload(game_agent)
-        self.player1 = game_agent.MinimaxPlayer(score_fn=open_move_score, search_depth=3)
-        self.player2 = game_agent.MinimaxPlayer(score_fn=open_move_score, search_depth=3)
-        self.game = isolation.Board(self.player1, self.player2,9,9)
 
     def test_minimax(self):
+        self.player1 = game_agent.MinimaxPlayer(
+            score_fn=open_move_score, search_depth=3)
+        self.player2 = game_agent.MinimaxPlayer(
+            score_fn=open_move_score, search_depth=3)
+        self.game = isolation.Board(self.player1, self.player2, 9, 9)
         print("Minimax test")
-      
-
-        #self.game.apply_move((2,5))
-        #self.game.apply_move((6,8))
-
         print(self.game.to_string())
-
         self.game.play()
-        
+
 
 if __name__ == '__main__':
     unittest.main()
