@@ -345,6 +345,6 @@ class Board(object):
 
             self.apply_move(curr_move)
 
-            # adde print board to understand the game better 
+            # added print board to understand the game better 
             print(self.print_board())
             print("****** NEXT PLAYER ********")
