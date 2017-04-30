@@ -40,6 +40,39 @@ def open_move_score(game, player):
     return float(len(game.get_legal_moves(player)))
 
 
+def improved_score(game, player):
+    """The "Improved" evaluation function discussed in lecture that outputs a
+    score equal to the difference in the number of moves available to the
+    two players.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state
+    """
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    return float(own_moves - opp_moves)
+
+
+
 class IsolationTest(unittest.TestCase):
     """Unit tests for isolation agents"""
 
@@ -53,8 +86,8 @@ class IsolationTest(unittest.TestCase):
         print("Minimax test")
       
 
-        self.game.apply_move((2,5))
-        self.game.apply_move((6,8))
+        #self.game.apply_move((2,5))
+        #self.game.apply_move((6,8))
 
         print(self.game.to_string())
 

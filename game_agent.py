@@ -231,9 +231,9 @@ class MinimaxPlayer(IsolationPlayer):
                 #print(game.print_board())
                 return self.score(game, game.inactive_player)
             val = float("inf")
-            #print("depth",depth,"legal moves", len(game.get_legal_moves(player=game.active_player)))
-            #otherwise we go through all the actions to get best score
-            for a in game.get_legal_moves(player=game.active_player):
+            legal_moves = game.get_legal_moves(player=game.active_player)
+            print("   min total legal moves", legal_moves)
+            for a in legal_moves:
                 #count += 1
                 print("     Min node move:",a)
                 val = min(val, max_value(game.forecast_move(a), depth - 1))
@@ -259,7 +259,9 @@ class MinimaxPlayer(IsolationPlayer):
             val = float("-inf")
             #otherwise we go through all the actions to get best score
             #print("depth",depth,"legal moves", len(game.get_legal_moves(player=game.active_player)))
-            for a in game.get_legal_moves(player=game.active_player):
+            legal_moves = game.get_legal_moves(player=game.active_player)
+            print("   max total legal moves", legal_moves)
+            for a in legal_moves:
                 #count += 1
                 print("     Max node move:",a)
                 val = max(val, min_value(game.forecast_move(a), depth - 1))
