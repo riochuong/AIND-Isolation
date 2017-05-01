@@ -330,10 +330,32 @@ class AlphaBetaPlayer(IsolationPlayer):
             Board coordinates corresponding to a legal move; may return
             (-1, -1) if there are no available legal moves.
         """
+        #ITERATIVE_SEARCH_THRESHOLD = 2 # we should return possible value at 2 millisecond
         self.time_left = time_left
+        # Initialize the best move so that this function returns something
+        # in case the search fails due to timeout
+        best_move = (-1, -1)
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        try:
+            # The try/except block will automatically catch the exception
+            # raised when the timer is about to expire.
+            depth = 0
+            #timeleft = self.time_left()
+            while(1):
+                print("start searching at depth ",depth)
+                best_move = self.alphabeta(game, depth)
+                depth += 1
+                # we reach maximum allow level search 
+                if (depth > self.search_depth):
+                    break
+                #timeleft = self.time_left()
+
+        except SearchTimeout:
+            print('raised search timeout')
+            pass  # Handle any actions required after timeout as needed
+
+        # Return the best move from the last completed search iteration
+        return best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
         """Implement depth-limited minimax search with alpha-beta pruning as
@@ -380,8 +402,72 @@ class AlphaBetaPlayer(IsolationPlayer):
                 each helper function or else your agent will timeout during
                 testing.
         """
+        def min_value(game, alpha, beta, depth):
+            if self.time_left() < self.TIMER_THRESHOLD:
+                raise SearchTimeout()
+            # check if the game is over
+            utility = game.utility(game.inactive_player)
+            if (utility):
+                return utility
+            #check if we reach depth limit
+            if (depth <= 0):
+                return self.score(game, game.inactive_player)    
+            #now we need to chek all legal moves
+            legal_moves = game.get_legal_moves(player=game.active_player)
+            v = float("inf")
+            for move in legal_moves:
+                v = min(v, max_value(game.forecast_move(move),alpha,beta,depth -1))        
+                # check if we can prune any branch here
+                # the rest of the value must be smaller than v  
+                # but v must be at least alpha to be considered in range
+                # otherwise we can prune the remainings
+                if (v <= alpha):
+                    return v
+                # update beta value 
+                beta = min(v, beta)
+            return v
+
+
+        def max_value(game, alpha, beta, depth):
+            if self.time_left() < self.TIMER_THRESHOLD:
+                raise SearchTimeout()
+            # check if the game is over
+            utility = game.utility(game.active_player)
+            if (utility):
+                return utility
+            #check if we reach depth limit
+            if (depth <= 0):
+                return self.score(game, game.active_player)    
+            # now we 
+            v = float("-inf")
+            legal_moves = game.get_legal_moves(player=game.active_player)
+            for move in legal_moves:
+                v = max(v, min_value(game.forecast_move(move),alpha,beta,depth -1))
+                # the remaining value of v must be at least current v
+                # however, in order for v to be in range v must be smaller 
+                # than beta otherwise we can prune the rest
+                if (v >= beta):
+                    return v
+                # update alpha 
+                alpha = max(v, alpha)
+            return v
+
+        # alpha-beta search body
+        #alpha = float("-inf")
+        #beta = float("inf")
+        best_move = None
+
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
-
-        # TODO: finish this function!
-        raise NotImplementedError
+        # get all legal moves
+        legal_moves = game.get_legal_moves(player=game.active_player)
+        # go through each legal moves and see if we can prune it
+        for each_move in legal_moves:
+            v = min_value(game.forecast_move(each_move),alpha,beta,depth - 1)
+            if (v > alpha):
+                alpha = v
+                best_move = each_move
+        # now we can return best move
+        return best_move
+        
+    

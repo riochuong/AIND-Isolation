@@ -78,16 +78,26 @@ class IsolationTest(unittest.TestCase):
     def setUp(self):
         reload(game_agent)
 
-    def test_minimax(self):
-        self.player1 = game_agent.MinimaxPlayer(
-            score_fn=open_move_score, search_depth=3)
-        self.player2 = game_agent.MinimaxPlayer(
-            score_fn=open_move_score, search_depth=3)
+    # def test_minimax(self):
+    #     self.player1 = game_agent.MinimaxPlayer(
+    #         score_fn=open_move_score, search_depth=3)
+    #     self.player2 = game_agent.MinimaxPlayer(
+    #         score_fn=open_move_score, search_depth=3)
+    #     self.game = isolation.Board(self.player1, self.player2, 9, 9)
+    #     print("Minimax test")
+    #     print(self.game.to_string())
+    #     self.game.play()
+
+    def test_alphabeta(self):
+        self.player1 = game_agent.AlphaBetaPlayer(
+            score_fn=open_move_score, search_depth=10)
+        self.player2 = game_agent.AlphaBetaPlayer(
+            score_fn=open_move_score, search_depth=10)
         self.game = isolation.Board(self.player1, self.player2, 9, 9)
         print("Minimax test")
         print(self.game.to_string())
         self.game.play()
-
+  
 
 if __name__ == '__main__':
     unittest.main()
