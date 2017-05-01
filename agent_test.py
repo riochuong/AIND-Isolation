@@ -90,13 +90,16 @@ class IsolationTest(unittest.TestCase):
 
     def test_alphabeta(self):
         self.player1 = game_agent.AlphaBetaPlayer(
-            score_fn=open_move_score, search_depth=10)
+            score_fn=open_move_score, search_depth=30)
         self.player2 = game_agent.AlphaBetaPlayer(
-            score_fn=open_move_score, search_depth=10)
+            score_fn=open_move_score, search_depth=30)
         self.game = isolation.Board(self.player1, self.player2, 9, 9)
         print("Minimax test")
         print(self.game.to_string())
-        self.game.play()
+        player,__,outcome = self.game.play()
+        print("player 1",self.player1)
+        print("player 2",self.player2)
+        print ("Outcome", outcome, "player ",player)
   
 
 if __name__ == '__main__':
