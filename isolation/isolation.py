@@ -10,6 +10,8 @@ be available to project reviewers.
 import random
 import timeit
 from copy import copy
+import time
+from sample_players import HumanPlayer
 
 TIME_LIMIT_MILLIS = 150
 
@@ -52,8 +54,7 @@ class Board(object):
         self._board_state[-1] = Board.NOT_MOVED
         self._board_state[-2] = Board.NOT_MOVED
         # quick hack for debugging 
-        #self._board_state = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 33, 67]
-
+        #self._board_state= [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 32, 41]
     def hash(self):
         return str(self._board_state).__hash__()
 
@@ -331,7 +332,7 @@ class Board(object):
             if curr_move is None:
                 curr_move = Board.NOT_MOVED
 
-            if move_end < 0:
+            if move_end < 0 and (not isinstance(self._active_player,HumanPlayer)) :
                 return self._inactive_player, move_history, "timeout"
 
             #print("curr move", curr_move)
@@ -343,8 +344,19 @@ class Board(object):
 
             move_history.append(list(curr_move))
 
+            # if (self.active_player == self._player_2):
+            #     print ("player 2 make move")
+            # else:
+            #     print ("player 1 make move")
+            # 
             self.apply_move(curr_move)
-
+           
             # added print board to understand the game better 
-            print(self.print_board())
-            print("****** NEXT PLAYER ********")
+            # print(self.print_board())
+            # print(self._board_state)
+            # print("blank spaces: ",len(self.get_blank_spaces()))
+            # print("occupied ratio: ",((1 - len(self.get_blank_spaces()) / 49.0) * 100))
+            # print("****** NEXT PLAYER ********")
+
+            #time.sleep(1)
+

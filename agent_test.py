@@ -9,6 +9,7 @@ import isolation
 import game_agent
 import timeit
 from importlib import reload
+from sample_players import HumanPlayer
 
 
 def open_move_score(game, player):
@@ -56,7 +57,7 @@ def improved_score(game, player):
         (i.e., `player` should be either game.__player_1__ or
         game.__player_2__).
 
-    Returns
+    Retu        rns
     ----------
     float
         The heuristic value of the current game state
@@ -89,18 +90,32 @@ class IsolationTest(unittest.TestCase):
     #     self.game.play()
 
     def test_alphabeta(self):
-        self.player1 = game_agent.AlphaBetaPlayer(
-            score_fn=open_move_score, search_depth=30)
-        self.player2 = game_agent.AlphaBetaPlayer(
-            score_fn=open_move_score, search_depth=30)
-        self.game = isolation.Board(self.player1, self.player2, 9, 9)
-        print("Minimax test")
-        print(self.game.to_string())
-        player,__,outcome = self.game.play()
-        print("player 1",self.player1)
-        print("player 2",self.player2)
-        print ("Outcome", outcome, "player ",player)
-  
+        win_count = 0
+        for i in range(10):
+            self.player1 = game_agent.AlphaBetaPlayer(
+                score_fn=open_move_score, search_depth=30)
+            self.player2 = game_agent.AlphaBetaPlayer(
+                score_fn=game_agent.custom_score, search_depth=30)
+            # self.player2 = HumanPlayer()
+            self.game = isolation.Board(self.player2, self.player1, 7, 7)
+            #print("Minimax test")
+            #print(self.game.to_string())
+            print("Board start !")
+            print(self.game.print_board())
+            winner,__,outcome = self.game.play()
+            #print("player 1",self.player1)
+            #print("player 2",self.player2)
+            #print ("Outcome", outcome)
+            if (winner == self.player2):
+                win_count += 1
+                print("You win")
+            else:
+                print("You lose")
+
+            print("ratio: ", (1 - len(self.game.get_blank_spaces()) / 81) * 100)
+            print ("reason: ",outcome)
+
+        print ("===== Total Win : ",win_count," ===========")
 
 if __name__ == '__main__':
     unittest.main()

@@ -35,8 +35,172 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
 
+    """ 
+      Factors can affect the heuricstic of the game play:
+            + Number of legal moves compare with opponents
+            + Number of open spaces in my partition compare with opponent partition ( if there is partition )
+            + How goods are the remaining legal moves
+            + Where is the opponent 
+    """ 
+
+    def distance_between(a,b):
+        #print("distance between ",a," ",b)
+        return np.sum(np.subtract(a,b)**2)
+
+
+    def is_reflected (loc, center_sq):
+        if (game.width != game.height):
+            return False
+        x = loc[0]
+        y = loc[1]
+        center_row = center_sq[0]
+        center_col = center_sq[1]
+        if (x == center_row):
+            return True
+        if (y == center_col):
+            return True
+        # first diagonal
+        if (x == y):
+            return True
+        i = 0
+        j = game.width - 1
+        k = 0
+        #assume game.width == game.height
+        # second diagonal check 
+        for k in range(game.width):
+            if (x == i and y == j):
+                return True
+            x += 1
+            y -= 1
+
+        return False
+    
+    # check to see if we have more empty space arounds than opponent
+    def score_total_space_near_by(player_loc, opponent_loc, game):
+        my_score = 0
+        opp_score = 0
+        for each_space in game.get_blank_spaces():
+           my_score += (-1) * (distance_between(player_loc, each_space))
+           #opp_score += (-1) * (distance_between(opponent_loc,each_space))
+        # the bigger this number the better
+        print("player loc ",player_loc)
+        print("score total space nearby ", (my_score))
+        return my_score
+
+    # check if the player is the first player to start the game
+    def is_player_1(player):
+        return ( 
+                ((player == game.active_player) and ((game.move_count % 2) == 0))
+                or 
+                ((player == game.inactive_player) and ((game.move_count % 2) != 0))
+               )
+    
+    def get_valid_moves_from_loc(move):
+        directions = [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
+                      (1, -2), (1, 2), (2, -1), (2, 1)]
+        valid_moves = [(move[0] + dr, move[1] + dc) for dr, dc in directions]
+        return valid_moves
+
+    # find how many squares we can reach from the current position in 2 steps
+    def num_with_in_reach_area_in_next(player):
+        score = 0
+        blank_spaces = game.get_blank_spaces()
+        legal_moves = game.get_legal_moves(player)
+        opponent_legal_moves = game.get_legal_moves(game.get_opponent(player))
+        for each_move in legal_moves  :
+            if (each_move not in opponent_legal_moves):
+                valid_moves = get_valid_moves_from_loc(each_move)
+                for new_move in valid_moves:
+                    if (new_move in blank_spaces):
+                        new_valid_moves = get_valid_moves_from_loc(new_move)
+                        for (each_grand_child) in new_valid_moves:
+                            if (each_grand_child in blank_spaces) \
+                                and (each_grand_child != each_move): # make sure this move not went back to orig
+                                    score += 2
+                score += 1
+        #print("score",score)
+        return score
+       
+        
+
+
+    
+    # def longest_possible_path(player):
+    #     for move in game.get_legal_moves(player):
+
+
+
+    # MAIN START HERE 
+    # verify if we are winner or loser 
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+
+    # check to see if I am the first player 
+    is_me_player_1 = is_player_1(player)
+    #print("Is Player 1: ", is_me_player_1)
+
+    # we can apply different heuristic based on the number of remaining open-spaces
+    center_square = None
+    height = game.height
+    width = game.width 
+    total_spaces = height * width
+    opponent_player = game.get_opponent(player=player)
+    
+    # obtains number of legal moves
+    my_legal_moves = game.get_legal_moves(player=player)
+    opponent_legal_moves = game.get_legal_moves(player=opponent_player)
+    
+    # obtain how much free spaces still there
+    open_spaces = game.get_blank_spaces()
+    occupied_space = total_spaces - len(open_spaces)
+    
+    # calculate open space ratio
+    occupied_space_ratio = occupied_space / total_spaces
+
+    # get players location. the order is y,x
+    my_location = game.get_player_location(player=player)
+    opponent_location = game.get_player_location(player=opponent_player)
+
+    # first check if the open space ratio is too small we can do some thing simple
+
+    if ((height % 2) != 0) and ((width %2 ) != 0):
+        center_square = ((int(height / 2)), (int(width / 2)))
+        #print("Center square at: ", center_square)
+    # strategy for player 1
+    if (is_player_1(player) or not is_player_1(player)):
+        if (occupied_space <= 3 and center_square):
+            score = (-1) * distance_between(center_square, my_location)
+            return score
+
+        elif (occupied_space_ratio < 0.3):
+            score =  (len(my_legal_moves)) + distance_between(my_location, opponent_location)
+            return score
+
+        elif (occupied_space_ratio < 0.5):
+            score =  len(my_legal_moves) + (num_with_in_reach_area_in_next(player))
+            return score
+
+        elif (occupied_space_ratio < 0.9):
+            return (len(my_legal_moves)) + num_with_in_reach_area_in_next(player)
+        else:
+            return  num_with_in_reach_area_in_next(player)
+
+        # return  0.4 * (num_with_in_reach_area_in_next(player)) \
+        #         + 0.5* len(my_legal_moves) \
+        #         - 0.2 * len(opponent_legal_moves) \
+        #         - distance_between(my_location,opponent_location) 
+
+
+
+    return score 
+    
+    print("Raised Error due to out of category ", occupied_space_ratio)
+    raise NotImplementedError
 
 def custom_score_2(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -61,7 +225,17 @@ def custom_score_2(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    
+    # just return simple score for now 
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    w, h = game.width / 2., game.height / 2.
+    y, x = game.get_player_location(player)
+    return float((h - y)**2 + (w - x)**2)
 
 
 def custom_score_3(game, player):
@@ -87,7 +261,15 @@ def custom_score_3(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    w, h = game.width / 2., game.height / 2.
+    y, x = game.get_player_location(player)
+    return float((h - y)**2 + (w - x)**2)
 
 
 class IsolationPlayer:
@@ -218,7 +400,7 @@ class MinimaxPlayer(IsolationPlayer):
             #print("min value")
             global count
             if self.time_left() < self.TIMER_THRESHOLD:
-                print("min timeout")
+                #print("min timeout")
                 raise SearchTimeout()
             # check if we reached the end game
             utility = game.utility(game.inactive_player)
@@ -232,10 +414,10 @@ class MinimaxPlayer(IsolationPlayer):
                 return self.score(game, game.inactive_player)
             val = float("inf")
             legal_moves = game.get_legal_moves(player=game.active_player)
-            print("   min total legal moves", legal_moves)
+            #print("   min total legal moves", legal_moves)
             for a in legal_moves:
                 #count += 1
-                print("     Min node move:",a)
+                #print("     Min node move:",a)
                 val = min(val, max_value(game.forecast_move(a), depth - 1))
             return val
 
@@ -244,7 +426,7 @@ class MinimaxPlayer(IsolationPlayer):
             #print("max")
             global count
             if self.time_left() < self.TIMER_THRESHOLD:
-                print("max timeout")
+                #print("max timeout")
                 raise SearchTimeout()
             # check if we reached the end game
             utility = game.utility(game.active_player)
@@ -260,10 +442,10 @@ class MinimaxPlayer(IsolationPlayer):
             #otherwise we go through all the actions to get best score
             #print("depth",depth,"legal moves", len(game.get_legal_moves(player=game.active_player)))
             legal_moves = game.get_legal_moves(player=game.active_player)
-            print("   max total legal moves", legal_moves)
+            #print("   max total legal moves", legal_moves)
             for a in legal_moves:
                 #count += 1
-                print("     Max node move:",a)
+                #print("     Max node move:",a)
                 val = max(val, min_value(game.forecast_move(a), depth - 1))
             return val
 
@@ -272,25 +454,25 @@ class MinimaxPlayer(IsolationPlayer):
 
         # search through all legal moves
         legal_moves = game.get_legal_moves(game.active_player)
-        print("Player", game.active_player)
-        print("Legal Moves Count",len(legal_moves))
+        #print("Player", game.active_player)
+        #print("Legal Moves Count",len(legal_moves))
         
         # no legal moves return (-1,-1)
         if (not len(legal_moves)):
             return (-1,-1)
-        print("check each move score")
+        #print("check each move score")
         move_scores = []
         # recursively find out what is the best moves  
         # player must be inactive player who will try to minimize the active player score  
         for move in legal_moves:
-            print("Branch at move: ",move)
+            #print("Branch at move: ",move)
             move_scores.append(min_value(game.forecast_move(move), depth - 1))
         #move_scores = [min_value(game.forecast_move(move), depth - 1) for move in legal_moves]
 
-        print("Nodes Count: ",count)
-        print("Move scores", move_scores)
-        print("Moves", legal_moves)
-        print("Moves Selected",legal_moves[np.argmax(move_scores)])
+        #print("Nodes Count: ",count)
+        #print("Move scores", move_scores)
+        #print("Moves", legal_moves)
+        #print("Moves Selected",legal_moves[np.argmax(move_scores)])
         return legal_moves[np.argmax(move_scores)]
 
 
@@ -340,7 +522,7 @@ class AlphaBetaPlayer(IsolationPlayer):
             depth = 0
             #timeleft = self.time_left()
             blank_spaces = len(game.get_blank_spaces())
-            print("Num blank spaces ",blank_spaces)
+            #print("Num blank spaces ",blank_spaces)
 
             # if no move left
             if (not len(game.get_legal_moves(self))):
@@ -352,12 +534,14 @@ class AlphaBetaPlayer(IsolationPlayer):
                 return legal_moves[0]
 
             while(depth <= (blank_spaces)):
-                print("start searching at depth ",depth," time left: ", self.time_left())
+                #print("start searching at depth ",depth," time left: ", self.time_left())
                 potential_move = self.alphabeta(game, depth)
+                #print("potential move ",potential_move)
                 # check if potential move is a good move 
                 if (potential_move != (-1,-1)):
                     best_move = potential_move
                 else:
+                    #print("best move", best_move)
                     return best_move
                 depth += 1
                 # raise timeout
@@ -365,11 +549,11 @@ class AlphaBetaPlayer(IsolationPlayer):
                     raise SearchTimeout()
 
         except SearchTimeout:
-            print('raised search timeout')
+            #print('raised search timeout')
             pass  # Handle any actions required after timeout as needed
 
         # Return the best move from the last completed search iteration
-        print("returned best possible move", best_move)
+        #print("best move", best_move)
         return best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
@@ -433,6 +617,7 @@ class AlphaBetaPlayer(IsolationPlayer):
             if (len(legal_moves) == 0):
                 return v
             for move in legal_moves:
+                #print("   min level: ")
                 v = min(v, max_value(game.forecast_move(move),alpha,beta,depth -1))        
                 # check if we can prune any branch here
                 # the rest of the value must be smaller than v  
@@ -462,6 +647,7 @@ class AlphaBetaPlayer(IsolationPlayer):
             if (not len(legal_moves)):
                 return v
             for move in legal_moves:
+                #print ("   max level: ")
                 v = max(v, min_value(game.forecast_move(move),alpha,beta,depth -1))
                 # the remaining value of v must be at least current v
                 # however, in order for v to be in range v must be smaller 
@@ -482,7 +668,7 @@ class AlphaBetaPlayer(IsolationPlayer):
 
         # get all legal moves
         legal_moves = game.get_legal_moves(player=game.active_player)
-        print("number of legal moves", len(legal_moves))
+        #print("number of legal moves", len(legal_moves))
         # return bad moves 
         if (not legal_moves):
             return (-1,-1)
@@ -491,14 +677,17 @@ class AlphaBetaPlayer(IsolationPlayer):
             return legal_moves[0]
         # go through each legal moves and see if we can prune it
         for each_move in legal_moves:
+            #print("branch at ",each_move)
             v = min_value(game.forecast_move(each_move),alpha,beta,depth - 1)
+            #print ("SCORE for ",each_move," : ",v,"at depth ",depth)
             if (v > alpha):
                 alpha = v
                 best_move = each_move
+                #print("best move so far ",best_move," score:",v)
             if self.time_left() < (self.TIMER_THRESHOLD):
                 raise SearchTimeout()
         # now we can return best move
-        print("best move", best_move)
+        #print("best move from ab ", best_move)
         return best_move
         
     
