@@ -54,7 +54,7 @@ class Board(object):
         self._board_state[-1] = Board.NOT_MOVED
         self._board_state[-2] = Board.NOT_MOVED
         # quick hack for debugging 
-        #self._board_state= [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 32, 41]
+        #self._board_state= [0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 4, 7]
     def hash(self):
         return str(self._board_state).__hash__()
 
@@ -348,10 +348,10 @@ class Board(object):
             #     print ("player 2 make move")
             # else:
             #     print ("player 1 make move")
-            # 
+            
             self.apply_move(curr_move)
            
-            # added print board to understand the game better 
+            #added print board to understand the game better 
             # print(self.print_board())
             # print(self._board_state)
             # print("blank spaces: ",len(self.get_blank_spaces()))

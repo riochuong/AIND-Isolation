@@ -76,16 +76,16 @@ def custom_score(game, player):
 
         return False
     
-    # check to see if we have more empty space arounds than opponent
-    def score_total_space_near_by(player_loc, opponent_loc, game):
+    # check to see if we have more empty space arounds than pponent
+    def score_total_space_near_by(player_loc, game):
         my_score = 0
         opp_score = 0
         for each_space in game.get_blank_spaces():
            my_score += (-1) * (distance_between(player_loc, each_space))
            #opp_score += (-1) * (distance_between(opponent_loc,each_space))
         # the bigger this number the better
-        print("player loc ",player_loc)
-        print("score total space nearby ", (my_score))
+        #print("player loc ",player_loc)
+        #print("score total space nearby ", (my_score))
         return my_score
 
     # check if the player is the first player to start the game
@@ -96,10 +96,11 @@ def custom_score(game, player):
                 ((player == game.inactive_player) and ((game.move_count % 2) != 0))
                )
     
-    def get_valid_moves_from_loc(move):
+    def get_valid_moves_from_loc(move, blank_spaces):
         directions = [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
                       (1, -2), (1, 2), (2, -1), (2, 1)]
-        valid_moves = [(move[0] + dr, move[1] + dc) for dr, dc in directions]
+        valid_moves = [(move[0] + dr, move[1] + dc) \
+                                for dr, dc in directions if ((move[0] + dr, move[1] + dc) in blank_spaces) ]
         return valid_moves
 
     # find how many squares we can reach from the current position in 2 steps
@@ -109,17 +110,10 @@ def custom_score(game, player):
         legal_moves = game.get_legal_moves(player)
         opponent_legal_moves = game.get_legal_moves(game.get_opponent(player))
         for each_move in legal_moves  :
+            score += 1
             if (each_move not in opponent_legal_moves):
-                valid_moves = get_valid_moves_from_loc(each_move)
-                for new_move in valid_moves:
-                    if (new_move in blank_spaces):
-                        new_valid_moves = get_valid_moves_from_loc(new_move)
-                        for (each_grand_child) in new_valid_moves:
-                            if (each_grand_child in blank_spaces) \
-                                and (each_grand_child != each_move): # make sure this move not went back to orig
-                                    score += 2
-                score += 1
-        #print("score",score)
+                valid_moves = get_valid_moves_from_loc(each_move,blank_spaces)
+                score += len(valid_moves)
         return score
        
         
@@ -139,66 +133,47 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
+    # # useful information 
+    opponent_player = game.get_opponent(player)
+    my_legal_moves = game.get_legal_moves(player)
+    opponent_legal_moves = game.get_legal_moves(opponent_player)
+    my_location = game.get_player_location(player)
+    opponent_location = game.get_player_location(opponent_player)
+    blank_spaces = game.get_blank_spaces()
+    total_spaces = game.height * game.width
+    occupied_space = float(total_spaces - len(blank_spaces))
+    occupied_space_ratio = occupied_space / float(total_spaces)
+    center_square = (game.height / 2, game.width / 2)
 
-    # check to see if I am the first player 
-    is_me_player_1 = is_player_1(player)
-    #print("Is Player 1: ", is_me_player_1)
+    # #get as close to the middle in the first 3 moves
+    if (occupied_space_ratio < 0.3):
+        score = (-1) * distance_between(my_location,center_square)
+        if (opponent_location):
+            score =  (-1) * distance_between(my_location,opponent_location) 
+        return score
 
-    # we can apply different heuristic based on the number of remaining open-spaces
-    center_square = None
-    height = game.height
-    width = game.width 
-    total_spaces = height * width
-    opponent_player = game.get_opponent(player=player)
-    
-    # obtains number of legal moves
-    my_legal_moves = game.get_legal_moves(player=player)
-    opponent_legal_moves = game.get_legal_moves(player=opponent_player)
-    
-    # obtain how much free spaces still there
-    open_spaces = game.get_blank_spaces()
-    occupied_space = total_spaces - len(open_spaces)
-    
-    # calculate open space ratio
-    occupied_space_ratio = occupied_space / total_spaces
+    elif (occupied_space_ratio < 0.6):
+         my_next_opens = num_with_in_reach_area_in_next(player)
+         opp_next_opens = num_with_in_reach_area_in_next(opponent_player)
+         score = my_next_opens - opp_next_opens
+         return score
+    #     score = (-1) * opp_next_opens
+    #     score -= len(opponent_legal_moves)
+    #     score -= (-1) * distance_between(my_location,opponent_location)
 
-    # get players location. the order is y,x
-    my_location = game.get_player_location(player=player)
-    opponent_location = game.get_player_location(player=opponent_player)
-
-    # first check if the open space ratio is too small we can do some thing simple
-
-    if ((height % 2) != 0) and ((width %2 ) != 0):
-        center_square = ((int(height / 2)), (int(width / 2)))
-        #print("Center square at: ", center_square)
-    # strategy for player 1
-    if (is_player_1(player) or not is_player_1(player)):
-        if (occupied_space <= 3 and center_square):
-            score = (-1) * distance_between(center_square, my_location)
-            return score
-
-        elif (occupied_space_ratio < 0.3):
-            score =  (len(my_legal_moves)) + distance_between(my_location, opponent_location)
-            return score
-
-        elif (occupied_space_ratio < 0.5):
-            score =  len(my_legal_moves) + (num_with_in_reach_area_in_next(player))
-            return score
-
-        elif (occupied_space_ratio < 0.9):
-            return (len(my_legal_moves)) + num_with_in_reach_area_in_next(player)
-        else:
-            return  num_with_in_reach_area_in_next(player)
-
-        # return  0.4 * (num_with_in_reach_area_in_next(player)) \
-        #         + 0.5* len(my_legal_moves) \
-        #         - 0.2 * len(opponent_legal_moves) \
-        #         - distance_between(my_location,opponent_location) 
+    # elif(occupied_space_ratio < 0.7):
+    #     score = len(my_legal_moves)
+    #     #score += distance_between(my_location,opponent_location)            
+    else:
+        score = len(my_legal_moves) - len(opponent_legal_moves)
+    return float(score)
+    #return (-1) * len(game.get_legal_moves(opponent_player))
+    ## we need good eval function for early stages of the games as the AB cannot search 
+    # very far with so many possibilities
+    # however, when the possibilities reduced we can rely more on AB to find the end game
 
 
 
-    return score 
-    
     print("Raised Error due to out of category ", occupied_space_ratio)
     raise NotImplementedError
 
@@ -679,7 +654,7 @@ class AlphaBetaPlayer(IsolationPlayer):
         for each_move in legal_moves:
             #print("branch at ",each_move)
             v = min_value(game.forecast_move(each_move),alpha,beta,depth - 1)
-            #print ("SCORE for ",each_move," : ",v,"at depth ",depth)
+            # print ("SCORE for ",each_move," : ",v,"at depth ",depth)
             if (v > alpha):
                 alpha = v
                 best_move = each_move
@@ -687,7 +662,7 @@ class AlphaBetaPlayer(IsolationPlayer):
             if self.time_left() < (self.TIMER_THRESHOLD):
                 raise SearchTimeout()
         # now we can return best move
-        #print("best move from ab ", best_move)
+        # print("best move from ab ", best_move)
         return best_move
         
     

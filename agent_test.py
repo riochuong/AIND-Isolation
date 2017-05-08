@@ -10,6 +10,7 @@ import game_agent
 import timeit
 from importlib import reload
 from sample_players import HumanPlayer
+from sample_players import center_score
 
 
 def open_move_score(game, player):
@@ -93,15 +94,15 @@ class IsolationTest(unittest.TestCase):
         win_count = 0
         for i in range(10):
             self.player1 = game_agent.AlphaBetaPlayer(
-                score_fn=open_move_score, search_depth=30)
+                score_fn=center_score, search_depth=30)
             self.player2 = game_agent.AlphaBetaPlayer(
                 score_fn=game_agent.custom_score, search_depth=30)
             # self.player2 = HumanPlayer()
-            self.game = isolation.Board(self.player2, self.player1, 7, 7)
+            self.game = isolation.Board(self.player1, self.player2, 7, 7)
             #print("Minimax test")
             #print(self.game.to_string())
-            print("Board start !")
-            print(self.game.print_board())
+            # print("Board start !")
+            # print(self.game.print_board())
             winner,__,outcome = self.game.play()
             #print("player 1",self.player1)
             #print("player 2",self.player2)
