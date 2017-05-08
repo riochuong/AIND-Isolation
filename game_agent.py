@@ -146,7 +146,7 @@ def custom_score(game, player):
     center_square = (game.height / 2, game.width / 2)
 
     # #get as close to the middle in the first 3 moves
-    if (occupied_space_ratio < 0.3):
+    if (occupied_space_ratio < 0.1):
         score = (-1) * distance_between(my_location,center_square)
         if (opponent_location):
             score =  (-1) * distance_between(my_location,opponent_location) 

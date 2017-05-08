@@ -98,7 +98,7 @@ class IsolationTest(unittest.TestCase):
             self.player2 = game_agent.AlphaBetaPlayer(
                 score_fn=game_agent.custom_score, search_depth=30)
             # self.player2 = HumanPlayer()
-            self.game = isolation.Board(self.player1, self.player2, 7, 7)
+            self.game = isolation.Board(self.player2, self.player1, 7, 7)
             #print("Minimax test")
             #print(self.game.to_string())
             # print("Board start !")
