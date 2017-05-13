@@ -9,6 +9,39 @@ class SearchTimeout(Exception):
     """Subclass base exception for code clarity. """
     pass
 
+def distance_between(a,b):
+    #print("distance between ",a," ",b, np.sum(np.subtract(a,b)**2))
+    return float(np.sum(np.subtract(a,b)**2))
+
+def manhanttan_distance_between(a,b):
+    return (float (np.sum(np.abs(np.subtract(a,b)))))
+
+def max_distance_with_4_corners(player_loc,game):
+    max_h_index = game.height - 1
+    max_w_index = game.width - 1
+    four_c = [(0,0),(0,max_h_index),(max_h_index,max_w_index),(0,max_w_index)]
+    distances = [np.sum(np.abs(np.subtract(player_loc,loc))) for loc in four_c]
+    return max(distances)
+    
+
+def score_total_space_near_by(player_loc, game):
+    my_score = 0
+    opp_score = 0
+    for each_space in game.get_blank_spaces():
+        my_score += (-1) * (manhanttan_distance_between(player_loc, each_space))
+           #opp_score += (-1) * (distance_between(opponent_loc,each_space))
+        # the bigger this number the better
+        #print("player loc ",player_loc)
+        #print("score total space nearby ", (my_score))
+    return my_score
+
+def is_player_1(player,game):
+    return ( 
+        ((player == game.active_player) and ((game.move_count % 2) == 0))
+            or 
+        ((player == game.inactive_player) and ((game.move_count % 2) != 0))
+        )    
+
 
 def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -44,9 +77,6 @@ def custom_score(game, player):
             + Where is the opponent 
     """ 
 
-    def distance_between(a,b):
-        #print("distance between ",a," ",b)
-        return np.sum(np.subtract(a,b)**2)
 
 
     def is_reflected (loc, center_sq):
@@ -77,24 +107,8 @@ def custom_score(game, player):
         return False
     
     # check to see if we have more empty space arounds than pponent
-    def score_total_space_near_by(player_loc, game):
-        my_score = 0
-        opp_score = 0
-        for each_space in game.get_blank_spaces():
-           my_score += (-1) * (distance_between(player_loc, each_space))
-           #opp_score += (-1) * (distance_between(opponent_loc,each_space))
-        # the bigger this number the better
-        #print("player loc ",player_loc)
-        #print("score total space nearby ", (my_score))
-        return my_score
-
+ 
     # check if the player is the first player to start the game
-    def is_player_1(player):
-        return ( 
-                ((player == game.active_player) and ((game.move_count % 2) == 0))
-                or 
-                ((player == game.inactive_player) and ((game.move_count % 2) != 0))
-               )
     
     def get_valid_moves_from_loc(move, blank_spaces):
         directions = [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
@@ -116,15 +130,6 @@ def custom_score(game, player):
                 score += len(valid_moves)
         return score
        
-        
-
-
-    
-    # def longest_possible_path(player):
-    #     for move in game.get_legal_moves(player):
-
-
-
     # MAIN START HERE 
     # verify if we are winner or loser 
     if game.is_loser(player):
@@ -139,41 +144,32 @@ def custom_score(game, player):
     opponent_legal_moves = game.get_legal_moves(opponent_player)
     my_location = game.get_player_location(player)
     opponent_location = game.get_player_location(opponent_player)
-    blank_spaces = game.get_blank_spaces()
-    total_spaces = game.height * game.width
-    occupied_space = float(total_spaces - len(blank_spaces))
-    occupied_space_ratio = occupied_space / float(total_spaces)
-    center_square = (game.height / 2, game.width / 2)
+    #blank_spaces = game.get_blank_spaces()
+    #total_spaces = game.height * game.width
+    #occupied_space = float(total_spaces - len(blank_spaces))
+    #occupied_space_ratio = occupied_space / float(total_spaces)
+    center_square = (int(game.height / 2), int(game.width / 2))
 
-    # #get as close to the middle in the first 3 moves
-    if (occupied_space_ratio < 0.1):
-        score = (-1) * distance_between(my_location,center_square)
-        if (opponent_location):
-            score =  (-1) * distance_between(my_location,opponent_location) 
-        return score
 
-    elif (occupied_space_ratio < 0.6):
-         my_next_opens = num_with_in_reach_area_in_next(player)
-         opp_next_opens = num_with_in_reach_area_in_next(opponent_player)
-         score = my_next_opens - opp_next_opens
-         return score
-    #     score = (-1) * opp_next_opens
-    #     score -= len(opponent_legal_moves)
-    #     score -= (-1) * distance_between(my_location,opponent_location)
+    # score = 2 * num_with_in_reach_area_in_next(player)
+    # if (my_location in opponent_legal_moves):
+    #     score *= 2
+    # if ((len(my_legal_moves) - len(opponent_legal_moves)) > 0):
+    #     score *= 2
+    # else:
+    #     score /= 2
+    
+    if (is_player_1(player,game)):
+        score = 1.0 * (len(my_legal_moves)) - \
+                2.0 * len(opponent_legal_moves) - \
+                0.7 * manhanttan_distance_between(my_location,center_square)
 
-    # elif(occupied_space_ratio < 0.7):
-    #     score = len(my_legal_moves)
-    #     #score += distance_between(my_location,opponent_location)            
     else:
-        score = len(my_legal_moves) - len(opponent_legal_moves)
-    return float(score)
-    #return (-1) * len(game.get_legal_moves(opponent_player))
-    ## we need good eval function for early stages of the games as the AB cannot search 
-    # very far with so many possibilities
-    # however, when the possibilities reduced we can rely more on AB to find the end game
+        score = 3.0 * (len(my_legal_moves)) - \
+                2.0 * len(opponent_legal_moves) - \
+                0.3 * manhanttan_distance_between(my_location,center_square)
 
-
-
+    return score
     print("Raised Error due to out of category ", occupied_space_ratio)
     raise NotImplementedError
 
@@ -202,15 +198,27 @@ def custom_score_2(game, player):
     # TODO: finish this function!
     
     # just return simple score for now 
-    if game.is_loser(player):
-        return float("-inf")
+    
 
-    if game.is_winner(player):
-        return float("inf")
 
-    w, h = game.width / 2., game.height / 2.
-    y, x = game.get_player_location(player)
-    return float((h - y)**2 + (w - x)**2)
+    # # useful information 
+    opponent_player = game.get_opponent(player)
+    my_legal_moves = game.get_legal_moves(player)
+    opponent_legal_moves = game.get_legal_moves(opponent_player)
+    my_location = game.get_player_location(player)
+    opponent_location = game.get_player_location(opponent_player)
+    blank_spaces = game.get_blank_spaces()
+    total_spaces = game.height * game.width
+    occupied_space = float(total_spaces - len(blank_spaces))
+    occupied_space_ratio = occupied_space / float(total_spaces)
+    center_square = (game.height / 2, game.width / 2)
+
+    score = score_total_space_near_by(my_location,game)
+    #score = manhanttan_distance_between(my_location,center_square)
+    score -= 0.3 * max_distance_with_4_corners(my_location,game)
+    return score
+
+
 
 
 def custom_score_3(game, player):
@@ -236,15 +244,16 @@ def custom_score_3(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    if game.is_loser(player):
-        return float("-inf")
+    my_legal_moves = game.get_legal_moves(player)
+    opponent_legal_moves = game.get_legal_moves(game.get_opponent(player))
+    if (len(my_legal_moves) and len(opponent_legal_moves)):
+        score = np.log(len(my_legal_moves)) - np.log(len(opponent_legal_moves))
+    else:
+        score = 2 * len(my_legal_moves) - 0.5 * len(opponent_legal_moves)
 
-    if game.is_winner(player):
-        return float("inf")
-
-    w, h = game.width / 2., game.height / 2.
-    y, x = game.get_player_location(player)
-    return float((h - y)**2 + (w - x)**2)
+    if (game.get_player_location(player) in opponent_legal_moves):
+        score += 2
+    return score
 
 
 class IsolationPlayer:
@@ -654,7 +663,7 @@ class AlphaBetaPlayer(IsolationPlayer):
         for each_move in legal_moves:
             #print("branch at ",each_move)
             v = min_value(game.forecast_move(each_move),alpha,beta,depth - 1)
-            # print ("SCORE for ",each_move," : ",v,"at depth ",depth)
+           # print ("SCORE for ",each_move," : ",v,"at depth ",depth)
             if (v > alpha):
                 alpha = v
                 best_move = each_move

@@ -87,10 +87,6 @@ def play_matches(cpu_agents, test_agents, num_matches):
     print("\n{:^9}{:^13}{:^13}{:^13}{:^13}{:^13}".format(
         "Match #", "Opponent", test_agents[0].name, test_agents[1].name,
         test_agents[2].name, test_agents[3].name))
-
-    # print("\n{:^9}{:^13}{:^13}{:^13}{:^13}{:^13}".format(
-    #     "Match #", "Opponent", test_agents[0].name, test_agents[1].name,
-    #     test_agents[2].name, test_agents[3].name))
     print("{:^9}{:^13} {:^5}| {:^5} {:^5}| {:^5} {:^5}| {:^5} {:^5}| {:^5}"
           .format("", "", *(["Won", "Lost"] * 4)))
 

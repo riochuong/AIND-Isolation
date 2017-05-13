@@ -7,6 +7,7 @@ import unittest
 
 import isolation
 import game_agent
+import random
 import timeit
 from importlib import reload
 from sample_players import HumanPlayer
@@ -90,19 +91,31 @@ class IsolationTest(unittest.TestCase):
     #     print(self.game.to_string())
     #     self.game.play()
 
-    def test_alphabeta(self):
+    def test_me_player_1(self):
         win_count = 0
-        for i in range(10):
+        print("==============================================================")
+        print ("Me as player 1")
+        for i in range(5):
             self.player1 = game_agent.AlphaBetaPlayer(
-                score_fn=center_score, search_depth=30)
+                score_fn=center_score)
             self.player2 = game_agent.AlphaBetaPlayer(
-                score_fn=game_agent.custom_score, search_depth=30)
+                score_fn=game_agent.custom_score)
             # self.player2 = HumanPlayer()
-            self.game = isolation.Board(self.player2, self.player1, 7, 7)
+    
+            self.game = isolation.Board(self.player2, self.player1,7,7)
+
+            for _ in range(2):
+                move = random.choices(self.game.get_legal_moves())
+                print("random move ",move)
+                self.game.apply_move(move[0])
+
+            # self.game.apply_move((2,3))
+            # self.game.apply_move((1,3))
+
             #print("Minimax test")
             #print(self.game.to_string())
-            # print("Board start !")
-            # print(self.game.print_board())
+            print("Board start !")
+            print(self.game.print_board())
             winner,__,outcome = self.game.play()
             #print("player 1",self.player1)
             #print("player 2",self.player2)
@@ -115,6 +128,39 @@ class IsolationTest(unittest.TestCase):
 
             print("ratio: ", (1 - len(self.game.get_blank_spaces()) / 81) * 100)
             print ("reason: ",outcome)
+
+        # play me as player 2  
+        print("============================================================")
+        print(" Me as player 2")  
+        for i in range(5):
+            self.player1 = game_agent.AlphaBetaPlayer(
+                score_fn=center_score, search_depth=30)
+            self.player2 = game_agent.AlphaBetaPlayer(
+                score_fn=game_agent.custom_score, search_depth=30)
+            # self.player2 = HumanPlayer()
+    
+            self.game = isolation.Board(self.player1, self.player2, 7, 7)
+            for _ in range(2):
+                move = random.choices(self.game.get_legal_moves())
+                print("random move ",move)
+                self.game.apply_move(move[0])
+            #print("Minimax test")
+            #print(self.game.to_string())
+            print("Board start !")
+            print(self.game.print_board())
+            winner,__,outcome = self.game.play()
+            #print("player 1",self.player1)
+            #print("player 2",self.player2)
+            #print ("Outcome", outcome)
+            if (winner == self.player2):
+                win_count += 1
+                print("You win")
+            else:
+                print("You lose")
+
+            print("ratio: ", (1 - len(self.game.get_blank_spaces()) / 81) * 100)
+            print ("reason: ",outcome)
+
 
         print ("===== Total Win : ",win_count," ===========")
 
