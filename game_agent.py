@@ -43,6 +43,35 @@ def is_player_1(player,game):
         )    
 
 
+def get_valid_moves_from_loc(move, blank_spaces):
+    directions = [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
+                  (1, -2), (1, 2), (2, -1), (2, 1)]
+    valid_moves = [(move[0] + dr, move[1] + dc) \
+                            for dr, dc in directions if ((move[0] + dr, move[1] + dc) in blank_spaces) ]
+    return valid_moves
+
+def move_with_in_opp_reach(my_location, opp_location):
+    directions = [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
+                  (1, -2), (1, 2), (2, -1), (2, 1)]
+    valid_opp_moves = [(opp_location[0] + dr, opp_location[1] + dc) \
+                            for dr, dc in directions  ]
+    return (my_location in valid_opp_moves)
+
+
+def num_with_in_reach_area_in_next(player,game):
+    score = 0
+    blank_spaces = game.get_blank_spaces()
+    legal_moves = game.get_legal_moves(player)
+    opponent_legal_moves = game.get_legal_moves(game.get_opponent(player))
+    for each_move in legal_moves  :
+        score += 1
+        if (each_move not in opponent_legal_moves):
+            valid_moves = get_valid_moves_from_loc(each_move,blank_spaces)
+            score += len(valid_moves)
+    return score
+
+
+
 def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
     of the given player.
@@ -76,60 +105,13 @@ def custom_score(game, player):
             + How goods are the remaining legal moves
             + Where is the opponent 
     """ 
-
-
-
-    def is_reflected (loc, center_sq):
-        if (game.width != game.height):
-            return False
-        x = loc[0]
-        y = loc[1]
-        center_row = center_sq[0]
-        center_col = center_sq[1]
-        if (x == center_row):
-            return True
-        if (y == center_col):
-            return True
-        # first diagonal
-        if (x == y):
-            return True
-        i = 0
-        j = game.width - 1
-        k = 0
-        #assume game.width == game.height
-        # second diagonal check 
-        for k in range(game.width):
-            if (x == i and y == j):
-                return True
-            x += 1
-            y -= 1
-
-        return False
-    
-    # check to see if we have more empty space arounds than pponent
- 
-    # check if the player is the first player to start the game
-    
-    def get_valid_moves_from_loc(move, blank_spaces):
-        directions = [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
-                      (1, -2), (1, 2), (2, -1), (2, 1)]
-        valid_moves = [(move[0] + dr, move[1] + dc) \
-                                for dr, dc in directions if ((move[0] + dr, move[1] + dc) in blank_spaces) ]
-        return valid_moves
-
-    # find how many squares we can reach from the current position in 2 steps
-    def num_with_in_reach_area_in_next(player):
-        score = 0
-        blank_spaces = game.get_blank_spaces()
-        legal_moves = game.get_legal_moves(player)
-        opponent_legal_moves = game.get_legal_moves(game.get_opponent(player))
-        for each_move in legal_moves  :
-            score += 1
-            if (each_move not in opponent_legal_moves):
-                valid_moves = get_valid_moves_from_loc(each_move,blank_spaces)
-                score += len(valid_moves)
-        return score
-       
+    blank_spaces = game.get_blank_spaces()
+    total_spaces = game.height * game.width
+    occupied_space = float(total_spaces - len(blank_spaces))
+    occupied_space_ratio = occupied_space / float(total_spaces)
+    center_square = (game.height / 2, game.width / 2)
+    opponent_location = game.get_player_location(game.get_opponent(player))
+    my_location = game.get_player_location(player)
     # MAIN START HERE 
     # verify if we are winner or loser 
     if game.is_loser(player):
@@ -142,36 +124,20 @@ def custom_score(game, player):
     opponent_player = game.get_opponent(player)
     my_legal_moves = game.get_legal_moves(player)
     opponent_legal_moves = game.get_legal_moves(opponent_player)
-    my_location = game.get_player_location(player)
-    opponent_location = game.get_player_location(opponent_player)
-    #blank_spaces = game.get_blank_spaces()
-    #total_spaces = game.height * game.width
-    #occupied_space = float(total_spaces - len(blank_spaces))
-    #occupied_space_ratio = occupied_space / float(total_spaces)
-    center_square = (int(game.height / 2), int(game.width / 2))
-
-
-    # score = 2 * num_with_in_reach_area_in_next(player)
-    # if (my_location in opponent_legal_moves):
-    #     score *= 2
-    # if ((len(my_legal_moves) - len(opponent_legal_moves)) > 0):
-    #     score *= 2
-    # else:
-    #     score /= 2
     
-    if (is_player_1(player,game)):
-        score = 1.0 * (len(my_legal_moves)) - \
-                2.0 * len(opponent_legal_moves) - \
-                0.7 * manhanttan_distance_between(my_location,center_square)
-
+    # strategy 1
+    if (len(my_legal_moves) and len(opponent_legal_moves)):
+        score = np.log(2.0 * len(my_legal_moves)) - 1.0 * np.log(len(opponent_legal_moves))
     else:
-        score = 3.0 * (len(my_legal_moves)) - \
-                2.0 * len(opponent_legal_moves) - \
-                0.3 * manhanttan_distance_between(my_location,center_square)
+        # should not get here as game already over from the previous check
+        score = 2.0 * len(my_legal_moves) - 1.0 * len(opponent_legal_moves)
 
+    # add some points if we can interrupt opponent move
+    if (move_with_in_opp_reach(my_location,opponent_location)):
+        score += np.log(len(my_legal_moves))
+
+    #print("score", score)
     return score
-    print("Raised Error due to out of category ", occupied_space_ratio)
-    raise NotImplementedError
 
 def custom_score_2(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -197,28 +163,19 @@ def custom_score_2(game, player):
     """
     # TODO: finish this function!
     
-    # just return simple score for now 
-    
+    # MAIN START HERE 
+    # verify if we are winner or loser 
+    if game.is_loser(player):
+        return float("-inf")
 
+    if game.is_winner(player):
+        return float("inf")
 
-    # # useful information 
-    opponent_player = game.get_opponent(player)
-    my_legal_moves = game.get_legal_moves(player)
-    opponent_legal_moves = game.get_legal_moves(opponent_player)
     my_location = game.get_player_location(player)
-    opponent_location = game.get_player_location(opponent_player)
-    blank_spaces = game.get_blank_spaces()
-    total_spaces = game.height * game.width
-    occupied_space = float(total_spaces - len(blank_spaces))
-    occupied_space_ratio = occupied_space / float(total_spaces)
-    center_square = (game.height / 2, game.width / 2)
-
-    score = score_total_space_near_by(my_location,game)
-    #score = manhanttan_distance_between(my_location,center_square)
-    score -= 0.3 * max_distance_with_4_corners(my_location,game)
-    return score
-
-
+    # using warnsdorf's rule for finding knight tour
+    score = 3.0 * num_with_in_reach_area_in_next(player, game) - \
+                1.0 * max_distance_with_4_corners(my_location, game)
+    return score 
 
 
 def custom_score_3(game, player):
@@ -244,15 +201,17 @@ def custom_score_3(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
+    # MAIN START HERE 
+    # verify if we are winner or loser 
     my_legal_moves = game.get_legal_moves(player)
-    opponent_legal_moves = game.get_legal_moves(game.get_opponent(player))
-    if (len(my_legal_moves) and len(opponent_legal_moves)):
-        score = np.log(len(my_legal_moves)) - np.log(len(opponent_legal_moves))
-    else:
-        score = 2 * len(my_legal_moves) - 0.5 * len(opponent_legal_moves)
+    if game.is_loser(player):
+        return float("-inf")
 
-    if (game.get_player_location(player) in opponent_legal_moves):
-        score += 2
+    if game.is_winner(player):
+        return float("inf")
+
+    score = (-1.0) * len(my_legal_moves)
+
     return score
 
 

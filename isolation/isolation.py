@@ -205,7 +205,11 @@ class Board(object):
         idx = move[0] + move[1] * self.height
         last_move_idx = int(self.active_player == self._player_2) + 1
         self._board_state[-last_move_idx] = idx
-        self._board_state[idx] = 1
+        # adding to view player 1 and 2 moves
+        if (self.active_player == self._player_2):
+            self._board_state[idx] = 2
+        else:
+            self._board_state[idx] = 1
         self._board_state[-3] ^= 1
         self._active_player, self._inactive_player = self._inactive_player, self._active_player
         self.move_count += 1
@@ -269,7 +273,7 @@ class Board(object):
         """DEPRECATED - use Board.to_string()"""
         return self.to_string()
 
-    def to_string(self, symbols=['1', '2']):
+    def to_string(self, symbols=['xc', 'oc']):
         """Generate a string representation of the current game state, marking
         the location of each player and indicating which cells have been
         blocked, and which remain open.
@@ -287,13 +291,20 @@ class Board(object):
                 idx = i + j * self.height
                 if not self._board_state[idx]:
                     out += ' '
+                    out += ' | '
                 elif p1_loc == idx:
                     out += symbols[0]
+                    out += '| '
                 elif p2_loc == idx:
                     out += symbols[1]
-                else:
-                    out += '-'
-                out += ' | '
+                    out += '| '
+                elif self._board_state[idx] == 1:
+                    out += 'x'
+                    out +=" | "
+                elif self._board_state[idx] == 2:
+                    out += 'o'
+                    out += " | "
+                #out += ' | '
             out += '\n\r'
 
         return out
