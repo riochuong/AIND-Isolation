@@ -64,15 +64,27 @@ def num_with_in_reach_area_in_next(player,game):
     legal_moves = game.get_legal_moves(player)
     opponent_legal_moves = game.get_legal_moves(game.get_opponent(player))
     for each_move in legal_moves  :
-        score += 1
-        if (each_move not in opponent_legal_moves):
-            valid_moves = get_valid_moves_from_loc(each_move,blank_spaces)
-            score += len(valid_moves)
+        #score += 1
+        valid_moves = get_valid_moves_from_loc(each_move,blank_spaces)
+        score += len(valid_moves)
+        #if (each_move not in opponent_legal_moves):
+        #    score += 2 * len(valid_moves)
+        #else:
+        #    score += len(valid_moves)
     return score
 
+def is_in_walls_and_corners(my_loc,game):
+    r = my_loc[0]
+    c = my_loc[1]
+    if (r == 0 or r == (game.height - 1)):
+        return True
+    if (c == 0 or c == (game.width - 1)):
+        return True
+
+    return False
 
 
-def custom_score(game, player):
+def custom_score_3(game, player):
     """Calculate the heuristic value of a game state from the point of view
     of the given player.
 
@@ -105,13 +117,8 @@ def custom_score(game, player):
             + How goods are the remaining legal moves
             + Where is the opponent 
     """ 
-    blank_spaces = game.get_blank_spaces()
-    total_spaces = game.height * game.width
-    occupied_space = float(total_spaces - len(blank_spaces))
-    occupied_space_ratio = occupied_space / float(total_spaces)
-    center_square = (game.height / 2, game.width / 2)
-    opponent_location = game.get_player_location(game.get_opponent(player))
-    my_location = game.get_player_location(player)
+   
+    
     # MAIN START HERE 
     # verify if we are winner or loser 
     if game.is_loser(player):
@@ -120,10 +127,18 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    # # useful information 
+    # useful information 
+    my_location = game.get_player_location(player)
+    opponent_location = game.get_player_location(game.get_opponent(player))
     opponent_player = game.get_opponent(player)
     my_legal_moves = game.get_legal_moves(player)
     opponent_legal_moves = game.get_legal_moves(opponent_player)
+
+    #calculate occupied ratio
+    blank_spaces = game.get_blank_spaces()
+    total_spaces = game.height * game.width
+    occupied_space = float(total_spaces - len(blank_spaces))
+    occupied_space_ratio = occupied_space / float(total_spaces)
     
     # strategy 1
     if (len(my_legal_moves) and len(opponent_legal_moves)):
@@ -132,11 +147,11 @@ def custom_score(game, player):
         # should not get here as game already over from the previous check
         score = 2.0 * len(my_legal_moves) - 1.0 * len(opponent_legal_moves)
 
-    # add some points if we can interrupt opponent move
-    if (move_with_in_opp_reach(my_location,opponent_location)):
-        score += np.log(len(my_legal_moves))
+    # if we can tall
+    if (move_with_in_opp_reach(my_location,opponent_location) 
+        and len(my_legal_moves) >= 2):
+        score *= 2
 
-    #print("score", score)
     return score
 
 def custom_score_2(game, player):
@@ -171,14 +186,20 @@ def custom_score_2(game, player):
     if game.is_winner(player):
         return float("inf")
 
+    blank_spaces = game.get_blank_spaces()
+    total_spaces = game.height * game.width
+    occupied_space = float(total_spaces - len(blank_spaces))
+    occupied_space_ratio = occupied_space / float(total_spaces)
+
     my_location = game.get_player_location(player)
     # using warnsdorf's rule for finding knight tour
-    score = 3.0 * num_with_in_reach_area_in_next(player, game) - \
+    score = 2.0 * num_with_in_reach_area_in_next(player, game) - \
                 1.0 * max_distance_with_4_corners(my_location, game)
+
     return score 
 
 
-def custom_score_3(game, player):
+def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
     of the given player.
 
@@ -210,7 +231,27 @@ def custom_score_3(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    score = (-1.0) * len(my_legal_moves)
+    blank_spaces = game.get_blank_spaces()
+    total_spaces = game.height * game.width
+    occupied_space = float(total_spaces - len(blank_spaces))
+    occupied_space_ratio = occupied_space / float(total_spaces)
+    # center_square = (int(game.height / 2), int(game.width / 2))
+    # #opponent_location = game.get_player_location(game.get_opponent(player))
+    my_location = game.get_player_location(player)
+    opponent_location = game.get_player_location(game.get_opponent(player))
+    opponent_legal_moves = game.get_legal_moves(game.get_opponent(player))
+
+    # score from open spaces area
+    score = num_with_in_reach_area_in_next(player,game) 
+   
+    # double score if we can reduce opponent move
+    if (move_with_in_opp_reach(my_location,opponent_location) and len(my_legal_moves) >= 2):
+        score *= 2
+
+    # reduce score if position is bad:
+    if (is_in_walls_and_corners(my_location,game) and occupied_space_ratio >= 0.6):
+        score /= 2
+
 
     return score
 
@@ -425,6 +466,13 @@ class AlphaBetaPlayer(IsolationPlayer):
     make sure it returns a good move before the search time limit expires.
     """
 
+    def __init__(self, search_depth=3, score_fn=custom_score, timeout=10.):
+        IsolationPlayer.__init__(self,search_depth=search_depth, score_fn=score_fn, timeout=timeout)
+        self.current_best_score = float('-inf')
+        self.current_best_move = (-1,-1)
+        self.current_level_update = 0
+
+
     def get_move(self, game, time_left):
         """Search for the best move from the available legal moves and return a
         result before the time limit expires.
@@ -456,6 +504,9 @@ class AlphaBetaPlayer(IsolationPlayer):
             (-1, -1) if there are no available legal moves.
         """
         self.time_left = time_left
+        self.current_best_score = float('-inf')
+        self.current_best_move = (-1,-1)
+        self.current_level_update = 0
         # Initialize the best move so that this function returns something
         # in case the search fails due to timeout
         best_move = (-1, -1)
@@ -497,6 +548,8 @@ class AlphaBetaPlayer(IsolationPlayer):
 
         # Return the best move from the last completed search iteration
         #print("best move", best_move)
+        if (best_move != self.current_best_move and depth == self.current_level_update):
+            best_move = self.current_best_move
         return best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
@@ -622,10 +675,19 @@ class AlphaBetaPlayer(IsolationPlayer):
         for each_move in legal_moves:
             #print("branch at ",each_move)
             v = min_value(game.forecast_move(each_move),alpha,beta,depth - 1)
-           # print ("SCORE for ",each_move," : ",v,"at depth ",depth)
+            #print ("SCORE for ",each_move," : ",v,"at depth ",depth)
             if (v > alpha):
                 alpha = v
                 best_move = each_move
+                # if v is better score at deeper level. 
+                # we must update v even though the whole level has not
+                # been done yet 
+                if (v > self.current_best_score and depth > self.current_level_update):
+                    self.current_best_move = best_move
+                    self.current_best_score = v
+                    self.current_level_update = depth
+                    #print("update current_best_score ",self.current_best_score)
+                    #print("update best_move ", self.current_best_move)
                 #print("best move so far ",best_move," score:",v)
             if self.time_left() < (self.TIMER_THRESHOLD):
                 raise SearchTimeout()

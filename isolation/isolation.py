@@ -266,7 +266,7 @@ class Board(object):
                       (1, -2), (1, 2), (2, -1), (2, 1)]
         valid_moves = [(r + dr, c + dc) for dr, dc in directions
                        if self.move_is_legal((r + dr, c + dc))]
-        random.shuffle(valid_moves)
+        #random.shuffle(valid_moves)
         return valid_moves
 
     def print_board(self):
@@ -362,10 +362,10 @@ class Board(object):
             
             self.apply_move(curr_move)
            
-            # #added print board to understand the game better 
+            # # #added print board to understand the game better 
             # print(self.print_board())
             # print(self._board_state)
-            # print("blank spaces: ",len(self.get_blank_spaces()))
+            # # print("blank spaces: ",len(self.get_blank_spaces()))
             # print("occupied ratio: ",((1 - len(self.get_blank_spaces()) / 49.0) * 100))
             # print("****** NEXT PLAYER ********")
 

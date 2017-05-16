@@ -95,11 +95,11 @@ class IsolationTest(unittest.TestCase):
         win_count = 0
         print("==============================================================")
         print ("Me as player 1")
-        for i in range(1):
+        for i in range(10):
             self.player1 = game_agent.AlphaBetaPlayer(
-                score_fn=improved_score)
+                score_fn=open_move_score)
             self.player2 = game_agent.AlphaBetaPlayer(
-                score_fn=game_agent.custom_score)
+                score_fn=game_agent.custom_score_2)
             # self.player2 = HumanPlayer()
     
             self.game = isolation.Board(self.player2, self.player1,7,7)
@@ -132,11 +132,11 @@ class IsolationTest(unittest.TestCase):
         # play me as player 2  
         print("============================================================")
         print(" Me as player 2")  
-        for i in range(0):
+        for i in range(10):
             self.player1 = game_agent.AlphaBetaPlayer(
-                score_fn=improved_score, search_depth=30)
+                score_fn=open_move_score)
             self.player2 = game_agent.AlphaBetaPlayer(
-                score_fn=game_agent.custom_score, search_depth=30)
+                score_fn=game_agent.custom_score_2)
             # self.player2 = HumanPlayer()
     
             self.game = isolation.Board(self.player1, self.player2, 7, 7)
